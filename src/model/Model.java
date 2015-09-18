@@ -1,6 +1,7 @@
 package model;
 
 import controller.Controller;
+import global.Constants;
 import view.ConsoleView;
 
 import java.util.*;
@@ -32,7 +33,6 @@ public class Model extends Observable {
 
     }
     public void initModel(){
-        System.out.println("Init'ing model");
         selection = new Selection();
         curScreen = screen.VENTURE;
         time = 0;
@@ -45,6 +45,10 @@ public class Model extends Observable {
         emps.add(new Employee(0, "Alice"));
         emps.add(new Employee(1, "Bob"));
         emps.add(new Employee(2, "Cindy"));
+        emps.add(new Employee(3, "Deirdre"));
+        emps.add(new Employee(4, "Eva"));
+        emps.add(new Employee(5, "Frank"));
+        emps.add(new Employee(6, "Gordon"));
 
 
         Subtask forest = new Subtask(0, "Forest", 10);
@@ -53,6 +57,7 @@ public class Model extends Observable {
         forest.addReward(ItemList.hItem.LOG.ordinal(), 0.8);
         forest.addReward(ItemList.hItem.WATER.ordinal(), 0.2);
         forest.addReward(ItemList.hItem.VINE.ordinal(), 0.4);
+        forest.addReward(ItemList.hItem.NAIL.ordinal(), 0.1);
 
         beach.addReward(ItemList.hItem.LOG  , 0.1);
         beach.addReward(ItemList.hItem.WATER, 1.0);
@@ -72,57 +77,67 @@ public class Model extends Observable {
         recipes.add(rPlank);
         recipes.add(rRope);
 
-        emps.get(0).setAssigned(forest);
-        emps.get(1).setAssigned(forest);
-        emps.get(2).setAssigned(forest);
+        for(Employee emp : emps){
+            emp.setAssigned(forest);
+        }
 
         selection.setCurSel(emps.get(0));
 
         stateChange();
     }
 
-    //i might be digging myself into a deeper and deeper hole here...
-    // need ot rethink organization of this stuff.
+    // this scales properly
     public void moveCursor(int direction){ // +1/-1
-        int index = 0;
-        for(int i = 0; i< emps.size(); i++){
-            if(selection.getCurSel() == emps.get(i)){
-                index = i;
-            }
+        int index = ((Employee)selection.getCurSel()).getId();
+        index += direction;
+        if(index <0) {
+            index = emps.size()-1;
+            selection.setVsliderIndex(index - Constants.BUFFER_HEIGHT);
         }
-        index = index + direction;
-        if(index <0) index = emps.size()-1;
-        else if(index >= emps.size()) index = 0;
+        else if(index >= emps.size()) {
+            index = 0;
+            selection.setVsliderIndex(0);
+        }
+        if(index - selection.getVsliderIndex() >= Constants.BUFFER_HEIGHT){
+            selection.setVsliderIndex(index - Constants.BUFFER_HEIGHT+1);
+        } else if (index < selection.getVsliderIndex()){
+            selection.setVsliderIndex(index);
+        }
         selection.setCurSel(emps.get(index));
         stateChange();
     }
+
     public void moveAssignment(int direction){ // +1/-1
-        int index = 0;
-        for(int i = 0; i< availableSubtasks.size(); i++){
-            if(((Employee)selection.getCurSel()).getAssigned() == availableSubtasks.get(i)){
-                index = i;
-            }
-        }
+        int index = ((Employee)selection.getCurSel()).getAssigned().getId();
         index += direction;
-        if(index <0) index = availableSubtasks.size()-1;
-        else if(index >= availableSubtasks.size()) index = 0;
+        if(index < 0) {
+            index = availableSubtasks.size()-1;
+            selection.setHsliderIndex(index - Constants.BUFFER_WIDTH);
+        }
+        else if(index >= availableSubtasks.size()) {
+            index = 0;
+            selection.setHsliderIndex(0);
+        }
+        if(index - selection.getHsliderIndex() > Constants.BUFFER_WIDTH){
+            selection.setHsliderIndex(index - Constants.BUFFER_WIDTH);
+        }
         ((Employee)selection.getCurSel()).setAssigned(availableSubtasks.get(index));
         stateChange();
     }
-
 
     public void stateChange(){
         setChanged();
         notifyObservers();
     }
 
+    public void setCurScreen(screen curScreen) {
+        this.curScreen = curScreen;
+        stateChange();
+    }
+
 
     public screen getCurScreen() {
         return curScreen;
-    }
-
-    public void setCurScreen(screen curScreen) {
-        this.curScreen = curScreen;
     }
 
     public List<Employee> getEmps() {

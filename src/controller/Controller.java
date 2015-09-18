@@ -53,6 +53,16 @@ public class Controller {
                     model.moveAssignment(1);
                 }
                 break;
+            case 'v': // venture
+                if(model.curScreen == Model.screen.CRAFT){
+                    model.setCurScreen(Model.screen.VENTURE);
+                }
+                break;
+            case 'c': // craft
+                if(model.curScreen == Model.screen.VENTURE){
+                    model.setCurScreen(Model.screen.CRAFT);
+                }
+                break;
         }
 
     }
