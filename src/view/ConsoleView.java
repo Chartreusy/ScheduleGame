@@ -48,8 +48,16 @@ public class ConsoleView implements Observer {
                 break;
             case CRAFT:
                 break;
+            case SUMMARY:
+                out = printSummary(m.getRecentlyGathered(), m.getSelection());
+                break;
+            case INVENTORY:
+                out = printSummary(m.getInventory(), m.getSelection());
+                break;
         }
+        System.out.println(out.length);
         for(int i = 0; i<out.length; i++){
+            if(out[i] == null) out[i] = "";
             System.out.println(out[i]);
         }
     }
@@ -68,15 +76,33 @@ public class ConsoleView implements Observer {
         return a+ws;
     }
 
+    public String[] printSummary(Inventory recent, Selection sel){
+        String[] ret = new String[Constants.BUFFER_HEIGHT]; // sliding window
+        int vindex = sel.getVsliderIndex();
+
+        String[] rec = recent.toStringArr();
+
+        for(int i = 0; i< ret.length; i++){
+            if(vindex+i >= rec.length) break;
+            if(vindex+i == sel.getCurIndex()){
+                ret[i] = "-"+rec[vindex+i];
+            }else{
+                ret[i] = rec[vindex+i];
+            }
+        }
+        return ret;
+    }
+
+
     public String[] printVenture(List<Employee> emps, Selection sel){
-        Employee selected = (Employee)sel.getCurSel();
+        Employee selected = emps.get(sel.getCurIndex());
         String[] ret = new String[Constants.BUFFER_HEIGHT]; // sliding window
         int vindex = sel.getVsliderIndex();
         // if selection is past buffer height, move window down to it
         // dealt with by selection class
         // print employees, emp energy/eff and their subtasks
         for(int i = 0; i < ret.length; i++){
-            if(i >= emps.size()) break;
+            if(vindex+i >= emps.size()) break;
             Employee e = emps.get(vindex+i);
             String name = (selected.getId() == e.getId())? "*"+e.getName()+"*":e.getName();
             ret[i] = normalize(name, Constants.CELL_WIDTH) ;
@@ -96,6 +122,7 @@ public class ConsoleView implements Observer {
 
         return ret;
     }
+
     // this does not scale...
     // employee   |  assignedsubtask
     public String[] employeeColumn(List<Employee> emps, Employee curSel){

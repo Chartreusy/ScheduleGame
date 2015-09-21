@@ -35,12 +35,20 @@ public class Controller {
         switch(in){
             case 'w':
                 if(model.curScreen == Model.screen.VENTURE){
-                    model.moveCursor(-1);
+                    model.moveCursor(-1, model.getEmps().size());
+                }else if(model.curScreen == Model.screen.SUMMARY){
+                    model.moveCursor(-1, model.getRecentlyGathered().size());
+                }else if(model.curScreen == Model.screen.INVENTORY){
+                    model.moveCursor(-1, model.getInventory().size());
                 }
                 break;
             case 's':
                 if(model.curScreen == Model.screen.VENTURE){
-                    model.moveCursor(1);
+                    model.moveCursor(1, model.getEmps().size());
+                }else if(model.curScreen == Model.screen.SUMMARY){
+                    model.moveCursor(1, model.getRecentlyGathered().size());
+                }else if(model.curScreen == Model.screen.SUMMARY){
+                    model.moveCursor(-1, model.getInventory().size());
                 }
                 break;
             case 'a':
@@ -53,13 +61,24 @@ public class Controller {
                     model.moveAssignment(1);
                 }
                 break;
+            case 'p':
+                if(model.curScreen == Model.screen.VENTURE){
+                    model.executeOrders();
+                    model.setCurScreen(Model.screen.SUMMARY);
+                }
+                break;
             case 'v': // venture
-                if(model.curScreen == Model.screen.CRAFT){
+                if(model.curScreen != Model.screen.VENTURE){
                     model.setCurScreen(Model.screen.VENTURE);
                 }
                 break;
+            case 'i': // inventory
+                if(model.curScreen != Model.screen.INVENTORY){
+                    model.setCurScreen(Model.screen.INVENTORY);
+                }
+                break;
             case 'c': // craft
-                if(model.curScreen == Model.screen.VENTURE){
+                if(model.curScreen != Model.screen.CRAFT){
                     model.setCurScreen(Model.screen.CRAFT);
                 }
                 break;

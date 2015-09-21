@@ -19,14 +19,15 @@ import java.util.*;
  *
  */
 public class Model extends Observable {
-    public static enum screen {VENTURE, CRAFT};
+    public static enum screen {VENTURE, CRAFT, SUMMARY, INVENTORY};
     public screen curScreen;
     Selection selection;
     List<Employee> emps;
     Task curTask;
     List<Subtask> availableSubtasks;
     List<Recipe> recipes;
-    HashMap<Item, Integer> inventory;
+    Inventory inv;
+    Inventory recentlyGathered;
     int time;
 
     public Model(){
@@ -39,7 +40,8 @@ public class Model extends Observable {
         emps = new ArrayList<Employee>();
         curTask = new Task(0);
         availableSubtasks = new ArrayList<Subtask>();
-        inventory = new HashMap<Item, Integer>();
+        recentlyGathered = new Inventory();
+        inv = new Inventory();
         recipes = new ArrayList<Recipe>();
 
         emps.add(new Employee(0, "Alice"));
@@ -54,6 +56,9 @@ public class Model extends Observable {
         Subtask forest = new Subtask(0, "Forest", 10);
         Subtask beach = new Subtask(1, "Beach", 10);
         Subtask junk = new Subtask(2, "Junkyard", 15);
+        forest.setDifficulty(10);
+        beach.setDifficulty(20);
+        junk.setDifficulty(40);
         forest.addReward(ItemList.hItem.LOG.ordinal(), 0.8);
         forest.addReward(ItemList.hItem.WATER.ordinal(), 0.2);
         forest.addReward(ItemList.hItem.VINE.ordinal(), 0.4);
@@ -61,6 +66,9 @@ public class Model extends Observable {
 
         beach.addReward(ItemList.hItem.LOG  , 0.1);
         beach.addReward(ItemList.hItem.WATER, 1.0);
+        beach.addReward(ItemList.hItem.SAND, 1.0);
+        beach.addReward(ItemList.hItem.SALT, 0.2);
+
         junk.addReward(ItemList.hItem.GLUE  , 0.4);
         junk.addReward(ItemList.hItem.NAIL  , 0.6);
 
@@ -80,21 +88,27 @@ public class Model extends Observable {
         for(Employee emp : emps){
             emp.setAssigned(forest);
         }
-
-        selection.setCurSel(emps.get(0));
-
         stateChange();
     }
 
-    // this scales properly
-    public void moveCursor(int direction){ // +1/-1
-        int index = ((Employee)selection.getCurSel()).getId();
-        index += direction;
-        if(index <0) {
-            index = emps.size()-1;
-            selection.setVsliderIndex(index - Constants.BUFFER_HEIGHT);
+    public void executeOrders(){
+        Map<Item, Integer> gathered;
+        for(Employee emp : emps){
+            gathered = emp.performAssigned();
+            for(Item item : gathered.keySet()){
+                inv.addItem(item, gathered.get(item));
+                recentlyGathered.addItem(item, gathered.get(item));
+            }
         }
-        else if(index >= emps.size()) {
+    }
+
+    public void moveCursor(int direction, int size){
+        int index = selection.getCurIndex();
+        index += direction;
+        if(index <0){
+            index = size -1;
+            selection.setVsliderIndex(index - Constants.BUFFER_HEIGHT);
+        } else if(index >= size){
             index = 0;
             selection.setVsliderIndex(0);
         }
@@ -103,12 +117,13 @@ public class Model extends Observable {
         } else if (index < selection.getVsliderIndex()){
             selection.setVsliderIndex(index);
         }
-        selection.setCurSel(emps.get(index));
+        selection.setCurIndex(index);
         stateChange();
     }
 
     public void moveAssignment(int direction){ // +1/-1
-        int index = ((Employee)selection.getCurSel()).getAssigned().getId();
+        Employee curEmp = emps.get(selection.getCurIndex());
+        int index = curEmp.getAssigned().getId();
         index += direction;
         if(index < 0) {
             index = availableSubtasks.size()-1;
@@ -121,7 +136,7 @@ public class Model extends Observable {
         if(index - selection.getHsliderIndex() > Constants.BUFFER_WIDTH){
             selection.setHsliderIndex(index - Constants.BUFFER_WIDTH);
         }
-        ((Employee)selection.getCurSel()).setAssigned(availableSubtasks.get(index));
+        curEmp.setAssigned(availableSubtasks.get(index));
         stateChange();
     }
 
@@ -131,6 +146,8 @@ public class Model extends Observable {
     }
 
     public void setCurScreen(screen curScreen) {
+        selection.setCurIndex(0);
+        if(this.curScreen == screen.SUMMARY) recentlyGathered.clear();
         this.curScreen = curScreen;
         stateChange();
     }
@@ -172,12 +189,12 @@ public class Model extends Observable {
         this.recipes = recipes;
     }
 
-    public HashMap<Item, Integer> getInventory() {
-        return inventory;
+    public Inventory getInventory() {
+        return inv;
     }
 
-    public void setInventory(HashMap<Item, Integer> inventory) {
-        this.inventory = inventory;
+    public void setInventory(Inventory inventory) {
+        this.inv = inventory;
     }
 
     public int getTime() {
@@ -194,5 +211,13 @@ public class Model extends Observable {
 
     public void setSelection(Selection selection) {
         this.selection = selection;
+    }
+
+    public Inventory getRecentlyGathered() {
+        return recentlyGathered;
+    }
+
+    public void setRecentlyGathered(Inventory recentlyGathered) {
+        this.recentlyGathered = recentlyGathered;
     }
 }

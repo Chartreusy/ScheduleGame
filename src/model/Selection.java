@@ -7,11 +7,19 @@ package model;
  * primary control device
  */
 public class Selection {
-    Object curSel;
-    int hsliderIndex, vsliderIndex;
+    int hsliderIndex, vsliderIndex, curIndex;
     public Selection(){
+        curIndex = 0;
         hsliderIndex = 0;
         vsliderIndex = 0;
+    }
+
+    public int getCurIndex() {
+        return curIndex;
+    }
+
+    public void setCurIndex(int curIndex) {
+        this.curIndex = curIndex;
     }
 
     public int getHsliderIndex() {
@@ -28,13 +36,5 @@ public class Selection {
 
     public void setVsliderIndex(int vsliderIndex) {
         this.vsliderIndex = vsliderIndex;
-    }
-
-    public Object getCurSel() {
-        return curSel;
-    }
-
-    public void setCurSel(Object curSel) {
-        this.curSel = curSel;
     }
 }
