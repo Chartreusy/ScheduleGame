@@ -22,6 +22,8 @@ public class Model extends Observable {
     public static enum screen {VENTURE, CRAFT, SUMMARY, INVENTORY};
     public screen curScreen;
     Selection selection;
+    Selection secondarySel;
+    int control; // which selection. should scale infinitely but i thin i only need 2
     List<Employee> emps;
     Task curTask;
     List<Subtask> availableSubtasks;
@@ -35,6 +37,8 @@ public class Model extends Observable {
     }
     public void initModel(){
         selection = new Selection();
+        secondarySel = new Selection();
+        control = 0;
         curScreen = screen.VENTURE;
         time = 0;
         emps = new ArrayList<Employee>();
@@ -86,8 +90,12 @@ public class Model extends Observable {
         recipes.add(rRope);
 
         for(Employee emp : emps){
-            emp.setAssigned(forest);
+            int i = (int)(Math.random()*3);
+            if(i == 0) emp.setAssigned(forest);
+            else if(i==1) emp.setAssigned(beach);
+            else emp.setAssigned(junk);
         }
+        resetSelection(emps.size());
         stateChange();
     }
 
@@ -101,25 +109,25 @@ public class Model extends Observable {
             }
         }
     }
-
-    public void moveCursor(int direction, int size){
-        int index = selection.getCurIndex();
-        index += direction;
-        if(index <0){
-            index = size -1;
-            selection.setVsliderIndex(index - Constants.BUFFER_HEIGHT);
-        } else if(index >= size){
-            index = 0;
-            selection.setVsliderIndex(0);
+    public void executeRecipe(){
+        Recipe recipe = recipes.get(selection.getCurIndex());
+        if(!recipe.craftability(inv)) return;
+        HashMap<Item, Integer> ings = recipe.getIngredients();
+        for(Item item : ings.keySet()){
+            inv.use(item, ings.get(item));
         }
-        if(index - selection.getVsliderIndex() >= Constants.BUFFER_HEIGHT){
-            selection.setVsliderIndex(index - Constants.BUFFER_HEIGHT+1);
-        } else if (index < selection.getVsliderIndex()){
-            selection.setVsliderIndex(index);
-        }
-        selection.setCurIndex(index);
-        stateChange();
+        inv.addItem(recipe.getOutput());
     }
+
+    public void moveCursor(int direction){
+        if(control == 0){
+            selection.moveCursor(direction);
+            resetSecondarySel();
+        }else if(control == 1) {
+            secondarySel.moveCursor(direction);
+        }
+    }
+
 
     public void moveAssignment(int direction){ // +1/-1
         Employee curEmp = emps.get(selection.getCurIndex());
@@ -137,7 +145,11 @@ public class Model extends Observable {
             selection.setHsliderIndex(index - Constants.BUFFER_WIDTH);
         }
         curEmp.setAssigned(availableSubtasks.get(index));
-        stateChange();
+    }
+
+    // since only two.
+    public void swapControl(){
+        control = (control == 0) ? 1:0;
     }
 
     public void stateChange(){
@@ -145,11 +157,24 @@ public class Model extends Observable {
         notifyObservers();
     }
 
-    public void setCurScreen(screen curScreen) {
+    public void resetSelection(int size){
         selection.setCurIndex(0);
+        selection.setVsliderIndex(0);
+        selection.setScrollsize(size);
+        secondarySel.setCurIndex(0);
+        secondarySel.setVsliderIndex(0);
+        control = 0;
+    }
+    public void resetSecondarySel(){
+        secondarySel.setCurIndex(0);
+        secondarySel.setVsliderIndex(0);
+        secondarySel.setScrollsize(recipes.get(secondarySel.getCurIndex()).size());
+    }
+
+
+    public void setCurScreen(screen curScreen) {
         if(this.curScreen == screen.SUMMARY) recentlyGathered.clear();
         this.curScreen = curScreen;
-        stateChange();
     }
 
 
@@ -205,12 +230,28 @@ public class Model extends Observable {
         this.time = time;
     }
 
+    public Selection getSecondarySel() {
+        return secondarySel;
+    }
+
+    public void setSecondarySel(Selection secondarySel) {
+        this.secondarySel = secondarySel;
+    }
+
     public Selection getSelection() {
         return selection;
     }
 
     public void setSelection(Selection selection) {
         this.selection = selection;
+    }
+
+    public int getControl() {
+        return control;
+    }
+
+    public void setControl(int control) {
+        this.control = control;
     }
 
     public Inventory getRecentlyGathered() {

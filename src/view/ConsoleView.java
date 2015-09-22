@@ -3,10 +3,7 @@ package view;
 import controller.Controller;
 import model.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.*;
 
 import global.Constants;
 
@@ -38,8 +35,10 @@ public class ConsoleView implements Observer {
         // everything is in here i guess
         // we're going to generate each column as separately
         // then stick them all together at the end.
-        // buffer is 80 by Constants.BUFFER_HEIGHT
         String[] out = new String[Constants.BUFFER_HEIGHT];
+        for(int i = 0; i< out.length; i++){
+            out[i] = "";
+        }
         switch(m.curScreen){
             case VENTURE:
                 //out = employeeColumn(m.getEmps(), (Employee) m.getSelection().getCurSel());
@@ -47,6 +46,9 @@ public class ConsoleView implements Observer {
                 out = printVenture(m.getEmps(), m.getSelection());
                 break;
             case CRAFT:
+                // list of recipes with ingredients.
+                // show how many of each recipe is currently owned
+                out = printCrafting(m.getRecipes(), m.getInventory(), m.getSelection(), m.getSecondarySel(), m.getControl());
                 break;
             case SUMMARY:
                 out = printSummary(m.getRecentlyGathered(), m.getSelection());
@@ -55,7 +57,6 @@ public class ConsoleView implements Observer {
                 out = printSummary(m.getInventory(), m.getSelection());
                 break;
         }
-        System.out.println(out.length);
         for(int i = 0; i<out.length; i++){
             if(out[i] == null) out[i] = "";
             System.out.println(out[i]);
@@ -75,9 +76,55 @@ public class ConsoleView implements Observer {
         }
         return a+ws;
     }
+    // a from left, b from right
+    public String doubleNorm(String a, String b, int max){
+        a = normalize(a, max);
+        a = a.substring(0, a.length() - b.length());
+        return a + b;
+    }
+
+    public String[] printCrafting(List<Recipe> recipes,
+                                  Inventory inv, Selection sel,
+                                  Selection ingSel, int control){
+        String[] ret = new String[Constants.BUFFER_HEIGHT];
+        Arrays.fill(ret, "");
+        int vindex = sel.getVsliderIndex();
+        for(int i = 0; i< ret.length; i++){
+            if(vindex+i >= recipes.size()) break;
+            Recipe r  = recipes.get(vindex+i);
+            String name = r.getName();
+            String held = (inv.has(r.getOutput()))?""+inv.get(r.getOutput()): "0";
+
+            if(vindex+i == sel.getCurIndex()){
+                name = (control == 0)? "*"+name : "-"+name;
+            }
+            ret[i] += doubleNorm(name,
+                                 held,
+                                 Constants.CELL_WIDTH) + "|";
+        }
+        Recipe selected = recipes.get(sel.getCurIndex());
+        HashMap<Item, Integer> ings = selected.getIngredients();
+        Item[] ing = new Item[ings.keySet().size()];
+        ings.keySet().toArray(ing);
+        int ingvindex = ingSel.getVsliderIndex();
+        for(int i = 0; i< ret.length; i++){
+            if(ingvindex+i >= ing.length) break;
+            String name = ing[i].getName();
+            String have = (inv.has(ing[i]))?""+inv.get(ing[i]): "0";
+            if(ingvindex+i == ingSel.getCurIndex()){
+                name = (control ==1)? "*"+name : "-"+name;
+            }
+            ret[i] += doubleNorm(name,
+                                 have +"/"+selected.get(ing[i]),
+                                 Constants.CELL_WIDTH);
+        }
+
+        return ret;
+    }
 
     public String[] printSummary(Inventory recent, Selection sel){
         String[] ret = new String[Constants.BUFFER_HEIGHT]; // sliding window
+        Arrays.fill(ret, "");
         int vindex = sel.getVsliderIndex();
 
         String[] rec = recent.toStringArr();
@@ -85,10 +132,10 @@ public class ConsoleView implements Observer {
         for(int i = 0; i< ret.length; i++){
             if(vindex+i >= rec.length) break;
             if(vindex+i == sel.getCurIndex()){
-                ret[i] = "-"+rec[vindex+i];
-            }else{
-                ret[i] = rec[vindex+i];
+                ret[i] = "-";
             }
+            ret[i] += rec[vindex+i];
+
         }
         return ret;
     }

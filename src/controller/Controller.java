@@ -6,6 +6,8 @@ import view.ConsoleView;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+import static model.Model.screen.*;
+
 /**
  * Created by Chartreuse on 18/09/15.
  */
@@ -25,64 +27,100 @@ public class Controller {
     public void consoleInput() throws Exception{
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String line = br.readLine();
+        if(line == null) line = "";
         while(!line.equalsIgnoreCase("q")){
             parseInput(line);
             line = br.readLine();
         }
     }
     public void parseInput(String line){
+        if(line.equalsIgnoreCase("")) return;
         char in = line.charAt(0);
         switch(in){
             case 'w':
-                if(model.curScreen == Model.screen.VENTURE){
-                    model.moveCursor(-1, model.getEmps().size());
-                }else if(model.curScreen == Model.screen.SUMMARY){
-                    model.moveCursor(-1, model.getRecentlyGathered().size());
-                }else if(model.curScreen == Model.screen.INVENTORY){
-                    model.moveCursor(-1, model.getInventory().size());
+                switch(model.curScreen){
+                    case VENTURE:
+                        model.moveCursor(-1);
+                        break;
+                    case SUMMARY:
+                        model.moveCursor(-1);
+                        break;
+                    case INVENTORY:
+                        model.moveCursor(-1);
+                        break;
+                    case CRAFT:
+                        model.moveCursor(-1);
+                        break;
                 }
                 break;
             case 's':
-                if(model.curScreen == Model.screen.VENTURE){
-                    model.moveCursor(1, model.getEmps().size());
-                }else if(model.curScreen == Model.screen.SUMMARY){
-                    model.moveCursor(1, model.getRecentlyGathered().size());
-                }else if(model.curScreen == Model.screen.SUMMARY){
-                    model.moveCursor(-1, model.getInventory().size());
+                switch(model.curScreen){
+                    case VENTURE:
+                        model.moveCursor(1);
+                        break;
+                    case SUMMARY:
+                        model.moveCursor(1);
+                        break;
+                    case INVENTORY:
+                        model.moveCursor(1);
+                        break;
+                    case CRAFT:
+                        model.moveCursor(1);
+                        break;
                 }
                 break;
             case 'a':
-                if(model.curScreen == Model.screen.VENTURE){
-                    model.moveAssignment(-1);
+                switch(model.curScreen){
+                    case VENTURE:
+                        model.moveAssignment(-1);
+                        break;
+                    case CRAFT:
+                        model.swapControl();
+                        break;
                 }
                 break;
             case 'd':
-                if(model.curScreen == Model.screen.VENTURE){
-                    model.moveAssignment(1);
+                switch(model.curScreen){
+                    case VENTURE:
+                        model.moveAssignment(1);
+                        break;
+                    case CRAFT:
+                        model.swapControl();
+                        break;
                 }
                 break;
             case 'p':
-                if(model.curScreen == Model.screen.VENTURE){
-                    model.executeOrders();
-                    model.setCurScreen(Model.screen.SUMMARY);
+                switch(model.curScreen){
+                    case VENTURE:
+                        model.executeOrders();
+                        model.resetSelection(model.getRecentlyGathered().size());
+                        model.setCurScreen(SUMMARY);
+                        break;
+                    case CRAFT:
+                        model.executeRecipe();
+                        break;
                 }
                 break;
             case 'v': // venture
-                if(model.curScreen != Model.screen.VENTURE){
-                    model.setCurScreen(Model.screen.VENTURE);
+                if(model.curScreen != VENTURE){
+                    model.resetSelection(model.getEmps().size());
+                    model.setCurScreen(VENTURE);
                 }
                 break;
             case 'i': // inventory
-                if(model.curScreen != Model.screen.INVENTORY){
-                    model.setCurScreen(Model.screen.INVENTORY);
+                if(model.curScreen != INVENTORY){
+                    model.resetSelection(model.getInventory().size());
+                    model.setCurScreen(INVENTORY);
                 }
                 break;
             case 'c': // craft
-                if(model.curScreen != Model.screen.CRAFT){
-                    model.setCurScreen(Model.screen.CRAFT);
+                if(model.curScreen != CRAFT){
+                    model.resetSelection(model.getRecipes().size());
+                    model.resetSecondarySel();
+                    model.setCurScreen(CRAFT);
                 }
                 break;
         }
-
+        model.stateChange();
     }
 }

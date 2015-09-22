@@ -22,6 +22,18 @@ public class Inventory {
         return itemList.size();
     }
 
+    public int get(Item item){
+        return itemList.get(item);
+    }
+    public boolean has(Item item){
+        return itemList.containsKey(item);
+    }
+    public void use(Item item, Integer i){
+        if(itemList.containsKey(item)){
+            itemList.put(item, itemList.get(item)-i);
+        }
+    }
+
     public void put(Item item, Integer i){
         if(itemList.containsKey(item)){
             itemList.put(item, itemList.get(item) + i);
