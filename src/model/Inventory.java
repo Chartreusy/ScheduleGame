@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by jaysenle on 21/09/15.
+ * Created by Chartreusy on 21/09/15.
  */
 public class Inventory {
     Map<Item, Integer> itemList;

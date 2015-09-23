@@ -4,6 +4,8 @@ import controller.Controller;
 import global.Constants;
 import view.ConsoleView;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.*;
 
 /**
@@ -21,19 +23,28 @@ import java.util.*;
 public class Model extends Observable {
     public static enum screen {VENTURE, CRAFT, SUMMARY, INVENTORY};
     public screen curScreen;
+    Markhov markhov;
     Selection selection;
     Selection secondarySel;
     int control; // which selection. should scale infinitely but i thin i only need 2
     List<Employee> emps;
     Task curTask;
+    List<Item> itemList;
+    List<Item> rewardList;
     List<Subtask> availableSubtasks;
     List<Recipe> recipes;
     Inventory inv;
     Inventory recentlyGathered;
     int time;
 
-    public Model(){
+    public Model() throws Exception{
+        markhov = new Markhov(Constants.MARKHOV_TRAIN);
 
+    }
+    public String genName(){
+        String ret = markhov.generate((int)(Constants.MAX_NAME_LENGTH*Math.random()));
+        System.out.println(ret);
+        return ret.substring(0,1).toUpperCase() + ret.substring(1);
     }
     public void initModel(){
         selection = new Selection();
@@ -47,53 +58,39 @@ public class Model extends Observable {
         recentlyGathered = new Inventory();
         inv = new Inventory();
         recipes = new ArrayList<Recipe>();
+        itemList = new ArrayList<Item>();
+        rewardList = new ArrayList<Item>();
 
-        emps.add(new Employee(0, "Alice"));
-        emps.add(new Employee(1, "Bob"));
-        emps.add(new Employee(2, "Cindy"));
-        emps.add(new Employee(3, "Deirdre"));
-        emps.add(new Employee(4, "Eva"));
-        emps.add(new Employee(5, "Frank"));
-        emps.add(new Employee(6, "Gordon"));
+        for(int i = 0; i< 7; i++){
+            Employee add = new Employee(i, genName());
+            emps.add(add);
+        }
 
+        for(int i = 0; i< 10; i++){
+            Item add = new Item(i, genName());
+            itemList.add(add);
+            rewardList.add(add); // same thing minus recipes.
+        }
+        for(int i = 0; i< 4; i++){
+            Item out = new Item(itemList.size(), genName());
+            Recipe add = new Recipe(i, out);
+            add.genIngs(itemList); // how to prevent deadlocks?
+            recipes.add(i, add);
+            itemList.add(out); // no self-deadlocks.
 
-        Subtask forest = new Subtask(0, "Forest", 10);
-        Subtask beach = new Subtask(1, "Beach", 10);
-        Subtask junk = new Subtask(2, "Junkyard", 15);
-        forest.setDifficulty(10);
-        beach.setDifficulty(20);
-        junk.setDifficulty(40);
-        forest.addReward(ItemList.hItem.LOG.ordinal(), 0.8);
-        forest.addReward(ItemList.hItem.WATER.ordinal(), 0.2);
-        forest.addReward(ItemList.hItem.VINE.ordinal(), 0.4);
-        forest.addReward(ItemList.hItem.NAIL.ordinal(), 0.1);
+        }
 
-        beach.addReward(ItemList.hItem.LOG  , 0.1);
-        beach.addReward(ItemList.hItem.WATER, 1.0);
-        beach.addReward(ItemList.hItem.SAND, 1.0);
-        beach.addReward(ItemList.hItem.SALT, 0.2);
+        availableSubtasks.add(new Subtask(0, "Rest", -50));
+        for(int i = 1; i< 4; i++){
+            Subtask add = new Subtask(i, genName(), i*10);
+            add.pickRewards(rewardList, recipes);
+            availableSubtasks.add(add);
+        }
 
-        junk.addReward(ItemList.hItem.GLUE  , 0.4);
-        junk.addReward(ItemList.hItem.NAIL  , 0.6);
-
-        availableSubtasks.add(forest);
-        availableSubtasks.add(beach);
-        availableSubtasks.add(junk);
-
-        Recipe rPlank = new Recipe(0, ItemList.synth[ItemList.sItem.PLANK.ordinal()]);
-        Recipe rRope = new Recipe(1, ItemList.synth[ItemList.sItem.ROPE.ordinal()]);
-        rPlank.addIng(ItemList.hItem.LOG, 1);
-        rPlank.addIng(ItemList.hItem.NAIL, 2);
-        rRope.addIng(ItemList.hItem.VINE, 1);
-        rRope.addIng(ItemList.hItem.GLUE, 1);
-        recipes.add(rPlank);
-        recipes.add(rRope);
 
         for(Employee emp : emps){
-            int i = (int)(Math.random()*3);
-            if(i == 0) emp.setAssigned(forest);
-            else if(i==1) emp.setAssigned(beach);
-            else emp.setAssigned(junk);
+            int i = (int)(Math.random()*availableSubtasks.size());
+            emp.setAssigned(availableSubtasks.get(i));
         }
         resetSelection(emps.size());
         stateChange();
@@ -261,4 +258,5 @@ public class Model extends Observable {
     public void setRecentlyGathered(Inventory recentlyGathered) {
         this.recentlyGathered = recentlyGathered;
     }
+
 }

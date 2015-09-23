@@ -12,14 +12,22 @@ import java.util.List;
  */
 public class Recipe {
     int id;
+    int difficulty;
     HashMap<Item, Integer> ingredients;
     Item output;
     public Recipe(int id, Item output){
         this.id = id;
         this.output = output;
+        this.difficulty = id; // for now
         ingredients = new HashMap<Item, Integer>();
     }
 
+    public void genIngs(List<Item> items){
+        for(int i = 0; i < difficulty; i++){
+            int rand = (int)((items.size()-1)*Math.random());
+            ingredients.put(items.get(rand), difficulty);
+        }
+    }
 
 
     public boolean craftability(Inventory inv){

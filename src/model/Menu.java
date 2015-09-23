@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by jaysenle on 21/09/15.
+ * Created by Chartreusy on 21/09/15.
  */
 public class Menu {
     List<MenuItem> items;

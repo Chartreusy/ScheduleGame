@@ -40,6 +40,7 @@ public class Employee {
             }
         }
         this.energy -= assigned.getDifficulty();
+        if(this.energy < 0) this.energy = 0;
         return gathered;
     }
 
@@ -65,6 +66,7 @@ public class Employee {
 
     public void setEnergy(int energy) {
         this.energy = energy;
+        if(this.energy < 0) this.energy = 0;
     }
 
     public int getEfficiency() {

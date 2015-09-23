@@ -26,7 +26,17 @@ public class Subtask {
         this.name = name;
         rewards = new ArrayList<Item>();
         rewardProbs = new ArrayList<Double>();
+        this.difficulty = difficulty;
     }
+
+    public void pickRewards(List<Item> rewards, List<Recipe> recipes){
+        int numRewards = difficulty/4;
+        for(int i = 0; i< numRewards; i++){
+            int rand = (int)((rewards.size()-1)*Math.random());
+            addReward(rewards.get(rand), Math.random());
+        }
+    }
+
     public void addReward(Item reward, double prob){
         rewards.add(reward);
         rewardProbs.add(prob);
